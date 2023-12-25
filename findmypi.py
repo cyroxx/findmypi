@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 
-# Copyright 2013
+# Copyright 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import smtplib, string, subprocess, time, socket, re
 import settings
 
 def get_ifconfig():
-    output_if = subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0]
+    output_if = subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0].decode('utf-8')
 
     # ifconfig will always have at least 'lo loopback' as match for inet addr
     # thus we want to find more than one interface with IP
-    if (len(re.findall("inet addr", output_if)) > 1):
+    if (len(re.findall("inet", output_if)) > 1):
         return (True, output_if)
     else:
         return (False, None)
@@ -50,14 +50,16 @@ while (not ifconfig[0]):
 
 output_cpu = open('/proc/cpuinfo', 'r').read()
 
-BODY = string.join((
+BODY = '\r\n'.join([
 "From: %s" % settings.fromaddr,
 "To: %s" % settings.toaddr,
 "Subject: Your RasberryPi just booted at " + time.ctime(),
 "",
 ifconfig[1],
 output_cpu,
-), "\r\n")
+])
+
+print(BODY)
 
 print("Sending email ...")
 send_mail(settings, BODY)
